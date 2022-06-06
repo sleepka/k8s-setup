@@ -1,7 +1,5 @@
 #!/bin/sh
 
-# check if setup has already been done
-
 if [[ -f "/.k8s.ready" ]]; then
   exit 0
 fi
@@ -10,6 +8,7 @@ fi
 
 yum install -y bash-completion binutils yum-utils
 yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+rm -f ~/.vimrc || true
 echo 'colorscheme ron' >> ~/.vimrc
 echo 'set tabstop=2' >> ~/.vimrc
 echo 'set shiftwidth=2' >> ~/.vimrc
@@ -27,9 +26,9 @@ sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
 
 
 ### remove packages
-kubeadm reset -f
-crictl rm $(crictl ps -a -q)
-yum remove -y docker.io containerd kubelet kubeadm kubectl kubernetes-cni firewalld
+kubeadm reset -f || true
+crictl rm $(crictl ps -a -q) || true
+yum remove -y docker.io containerd kubelet kubeadm kubectl kubernetes-cni firewalld || true
 systemctl daemon-reload
 
 
@@ -126,7 +125,7 @@ systemctl enable --now containerd
 systemctl enable --now kubelet
 
 ### init k8s
-rm /root/.kube/config
+rm -f /root/.kube/config || true
 kubeadm init --kubernetes-version=$(kubeadm version -o short|cut -d'v' -f2) --pod-network-cidr=10.96.0.0/12 --service-cidr=10.96.0.0/16 --ignore-preflight-errors=NumCPU --skip-token-print
 
 mkdir -p ~/.kube
@@ -135,9 +134,7 @@ cp -i /etc/kubernetes/admin.conf ~/.kube/config
 #kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
 kubectl --kubeconfig /etc/kubernetes/admin.conf apply -f https://docs.projectcalico.org/manifests/calico.yaml
 
-echo "### COMMAND TO ADD A WORKER NODE ###"
 echo "# kubeadm token create --print-join-command --ttl 0" > /root/add.node.txt
 kubeadm token create --print-join-command --ttl 0 >> /root/add.node.txt
 
 touch /.k8s.ready
-

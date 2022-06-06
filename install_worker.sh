@@ -8,6 +8,7 @@ fi
 ### setup terminal
 yum install -y bash-completion binutils yum-utils
 yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+rm -f ~/.vimrc || true
 echo 'colorscheme ron' >> ~/.vimrc
 echo 'set tabstop=2' >> ~/.vimrc
 echo 'set shiftwidth=2' >> ~/.vimrc
@@ -25,9 +26,9 @@ sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
 
 
 ### remove packages
-kubeadm reset -f
-crictl rm $(crictl ps -a -q)
-yum remove -y docker.io containerd kubelet kubeadm kubectl kubernetes-cni firewalld
+kubeadm reset -f || true
+crictl rm $(crictl ps -a -q) || true
+yum remove -y docker.io containerd kubelet kubeadm kubectl kubernetes-cni firewalld || true
 systemctl daemon-reload
 
 
@@ -124,7 +125,7 @@ systemctl enable --now containerd
 systemctl enable --now kubelet
 
 echo
-echo "EXECUTE ON MASTER: kubeadm token create --print-join-command --ttl 0"
-echo "THEN RUN THE OUTPUT AS COMMAND HERE TO ADD AS WORKER"
+echo "Execute on master: kubeadm token create --print-join-command --ttl 0"
+echo "Then run the output command here to add this node as worker"
 
 touch /.k8s.ready
